@@ -22,7 +22,6 @@ from tinyWinToast.tinyWinToast import Toast
 from config import read_cfg
 
 os.environ['NO_PROXY'] = '*'
-logzero.logfile("./log.txt")
 
 # 使 pyinstaller 能正确导入ico文件
 if hasattr(sys, 'frozen'):
@@ -32,7 +31,7 @@ else:
     basedir = dirname(__file__)
 
 icon_path = join(basedir, 'wangluo.ico')
-
+logzero.logfile(basedir + "\AutoRuijie.log")
 
 class MyToast(Toast):
     def show(self):
@@ -187,9 +186,10 @@ def connect():
 def main():
     # 通过是否能连接到校园网登录服务器判断当前网络环境是否在校园网内
     if cfg['funtion']['check_school_network'] and not test_internet(
-        host=cfg['url']['server'], timeout=3
+            host=cfg['url']['server'], timeout=3
     ):
-        notify(title='非校园网环境', msg='当前不在校园网环境，循环检测60次/s\n若您的系统刚启动，可能还没反应过来，没有连上任何网络，为正常现象')
+        notify(title='非校园网环境',
+               msg='当前不在校园网环境，循环检测60次/s\n若您的系统刚启动，可能还没反应过来，没有连上任何网络，为正常现象')
         logger.info("当前不在校园网环境，循环检测60次/s")
         sleep(1)
         max_retries = 60
@@ -206,6 +206,7 @@ def main():
         if cfg['funtion']['disconnect_network']:
             if askyesno(title='网络已连接', message='设备目前已联网，是否需要断网？', icon='info'):
                 disconnect()
+            logger.info('设备已经联网。')
             sys.exit(0)
         else:
             notify(title='设备已联网', msg='网络本来就是通的噢~')

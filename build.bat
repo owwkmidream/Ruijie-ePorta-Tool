@@ -1,2 +1,2 @@
 @echo off
-poetry run pyinstaller --clean -Fw Windows-Ruijie.spec
+poetry run pyinstaller --clean Windows-Ruijie.spec
