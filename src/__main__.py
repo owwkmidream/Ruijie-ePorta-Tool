@@ -4,6 +4,8 @@
 import os
 import subprocess
 import sys
+import logzero
+from logzero import logger
 from datetime import datetime
 from json import loads as json_loads
 from os.path import dirname, join
@@ -18,6 +20,9 @@ from urllib.request import urlopen
 from tinyWinToast.tinyWinToast import Toast
 
 from config import read_cfg
+
+os.environ['NO_PROXY'] = '*'
+logzero.logfile("./log.txt")
 
 # 使 pyinstaller 能正确导入ico文件
 if hasattr(sys, 'frozen'):
@@ -103,6 +108,7 @@ def test_internet(host: str = 'http://connect.rom.miui.com/generate_204', timeou
 
     try:
         resp = urlopen(host, timeout=timeout)
+        logger.info(f'测试连接：{host}，状态码：{resp.status}')
         if host.endswith('generate_204'):
             return resp.status == 204
         elif 200 <= resp.status <= 208 or resp.status == 226:
@@ -129,15 +135,19 @@ def disconnect():
     except Exception as e:
         error_message = f'出现错误:\n{str(e)}'
         showerror(title='未知错误', message=error_message)
+        logger.error(f'出现错误:\n{str(e)}')
         sys.exit(1)
     else:
         status = json_loads(res.read().decode())
         if status['result'] == 'success':
             notify(title='已断网', msg='断网成功！')
+            logger.info('断网成功！')
         elif status['result'] == 'fail':
             showerror(title='断网失败', message=f'断网失败:\n{status["message"]}')
+            logger.error(f'断网失败:\n{status["message"]}')
         else:
             showerror(title='错误', message=f'未知错误：{status}')
+            logger.error(f'未知错误：{status}')
 
 
 def connect():
@@ -156,17 +166,22 @@ def connect():
         res = request.urlopen(resp, timeout=10)
     except Exception as e:
         showerror(title='未知错误', message=f'出现错误:\n{str(e)}')
+        logger.error(f'出现错误:\n{str(e)}')
         sys.exit(1)
     else:
         status = json_loads(res.read().decode())
         if status['result'] == 'success' and status['message'] == '':
             notify(title='联网成功', msg='网络已连接！')
+            logger.info('联网成功！')
         elif status['result'] == 'success':
             notify(title='联网成功', msg=status['message'])
+            logger.info(f'联网成功！\n{status["message"]}')
         elif status['result'] == 'fail':
             showerror(title='联网失败', message=f'未知错误:\n{status["message"]}')
+            logger.error(f'联网失败:\n{status["message"]}')
         else:
             showerror(title='错误', message=f'未知错误:\n{status}')
+            logger.error(f'未知错误:\n{status}')
 
 
 def main():
@@ -175,14 +190,17 @@ def main():
         host=cfg['url']['server'], timeout=3
     ):
         notify(title='非校园网环境', msg='当前不在校园网环境，循环检测60次/s\n若您的系统刚启动，可能还没反应过来，没有连上任何网络，为正常现象')
+        logger.info("当前不在校园网环境，循环检测60次/s")
         sleep(1)
         max_retries = 60
         for _ in range(max_retries):
             if test_internet(host=cfg['url']['server'], timeout=2):
                 break
             sleep(1)
+            logger.info(f'检测次数：{_ + 1}')
         if not test_internet(host=cfg['url']['server'], timeout=2):
             notify(title='非校园网环境', msg='当前不在校园网环境，不自动尝试联网，程序自动退出')
+            logger.info("当前不在校园网环境，不自动尝试联网，程序自动退出")
             sys.exit(0)
     if test_internet():
         if cfg['funtion']['disconnect_network']:
@@ -191,6 +209,7 @@ def main():
             sys.exit(0)
         else:
             notify(title='设备已联网', msg='网络本来就是通的噢~')
+            logger.info('设备已经联网。')
     connect()
 
 
