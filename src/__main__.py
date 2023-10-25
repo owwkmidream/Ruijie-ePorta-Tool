@@ -27,11 +27,13 @@ os.environ['NO_PROXY'] = '*'
 if hasattr(sys, 'frozen'):
     os.environ['PATH'] = f"{sys._MEIPASS};" + os.environ['PATH']  # type: ignore # noqa
     basedir = sys._MEIPASS  # type: ignore # noqa
+    file_name = sys.executable
 else:
     basedir = dirname(__file__)
+    file_name = __file__
 
 icon_path = join(basedir, 'wangluo.ico')
-logzero.logfile(basedir + "\AutoRuijie.log")
+logzero.logfile(dirname(file_name) + "\AutoRuijie.log")
 
 class MyToast(Toast):
     def show(self):
