@@ -174,8 +174,13 @@ def main():
     if cfg['funtion']['check_school_network'] and not test_internet(
         host=cfg['url']['server'], timeout=3
     ):
-        notify(title='非校园网环境', msg='当前不在校园网环境，10s后重新检测\n若您的系统刚启动，可能还没反应过来，没有连上任何网络，为正常现象')
-        sleep(10)
+        notify(title='非校园网环境', msg='当前不在校园网环境，循环检测60次/s\n若您的系统刚启动，可能还没反应过来，没有连上任何网络，为正常现象')
+        sleep(1)
+        max_retries = 60
+        for _ in range(max_retries):
+            if test_internet(host=cfg['url']['server'], timeout=2):
+                break
+            sleep(1)
         if not test_internet(host=cfg['url']['server'], timeout=2):
             notify(title='非校园网环境', msg='当前不在校园网环境，不自动尝试联网，程序自动退出')
             sys.exit(0)
